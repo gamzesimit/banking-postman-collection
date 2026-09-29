@@ -1,0 +1,45 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  newman:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      parabank:
+        image: parasoft/parabank:latest
+        ports:
+          - 8081:8080
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g newman newman-reporter-htmlextra
+      - name: Wait for ParaBank
+        run: |
+          for i in $(seq 1 40); do
+            curl -s -L -o /dev/null --max-time 20 http://localhost:8081/parabank/index.htm || true
+            code=$(curl -s -o /dev/null -w "%{http_code}" -H 'Accept: application/json' \
+              http://localhost:8081/parabank/services/bank/accounts/12345 || true)
+            if [ "$code" = "200" ]; then echo "ready after $i attempts"; exit 0; fi
+            sleep 10
+          done
+          echo "ParaBank did not become ready"; exit 1
+      - name: Run the collection
+        run: |
+          newman run collection/parabank.postman_collection.json \
+            -e environments/local.postman_environment.json \
+            --reporters cli,htmlextra \
+            --reporter-htmlextra-export newman/report.html
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: newman-report
+          path: newman/
+          retention-days: 14

@@ -1,0 +1,197 @@
+{
+  "info": {
+    "name": "ParaBank retail banking API",
+    "description": "Requests grouped by what they prove, not by endpoint. Every money request asserts on the balance difference rather than on an absolute figure, so the collection can run twice in a row.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Read an account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('carries an identifier', () => pm.expect(body.id).to.be.a('number'));",
+                  "pm.test('carries a type', () => pm.expect(body.type).to.be.oneOf(['CHECKING','SAVINGS','LOAN']));",
+                  "pm.test('balance carries two decimal places', () => {",
+                  "  pm.expect(String(body.balance)).to.match(/^-?\\d+\\.\\d{2}$/);",
+                  "});",
+                  "pm.collectionVariables.set('balanceBefore', body.balance);",
+                  "pm.test('answers inside the read budget', () => pm.expect(pm.response.responseTime).to.be.below(1500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/accounts/{{fromAccount}}", "host": ["{{baseUrl}}"], "path": ["accounts", "{{fromAccount}}"] }
+          }
+        },
+        {
+          "name": "Read an account that does not exist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('is not reported as success', () => pm.expect(pm.response.code).to.not.equal(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/accounts/99999999", "host": ["{{baseUrl}}"], "path": ["accounts", "99999999"] }
+          }
+        },
+        {
+          "name": "List the accounts of a customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json();",
+                  "pm.test('holds at least one account', () => pm.expect(rows.length).to.be.above(0));",
+                  "pm.test('every account belongs to the customer asked for', () => {",
+                  "  rows.forEach((row) => pm.expect(String(row.customerId)).to.equal(pm.variables.get('customerId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}/accounts", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}", "accounts"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transfers",
+      "item": [
+        {
+          "name": "Transfer a valid amount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "pm.test('answers inside the write budget', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/transfer?fromAccountId={{fromAccount}}&toAccountId={{toAccount}}&amount=12.34",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer"],
+              "query": [
+                { "key": "fromAccountId", "value": "{{fromAccount}}" },
+                { "key": "toAccountId", "value": "{{toAccount}}" },
+                { "key": "amount", "value": "12.34" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The paying account fell by exactly the amount",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "const before = Number(pm.collectionVariables.get('balanceBefore'));",
+                  "const after = Number(pm.response.json().balance);",
+                  "const moved = Number((before - after).toFixed(2));",
+                  "pm.test(`fell by exactly 12.34, fell by ${moved}`, () => pm.expect(moved).to.equal(12.34));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/accounts/{{fromAccount}}", "host": ["{{baseUrl}}"], "path": ["accounts", "{{fromAccount}}"] }
+          }
+        },
+        {
+          "name": "Transfer to an account that does not exist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('is refused', () => pm.expect(pm.response.code).to.be.at.least(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/transfer?fromAccountId={{fromAccount}}&toAccountId=99999999&amount=1.00",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer"],
+              "query": [
+                { "key": "fromAccountId", "value": "{{fromAccount}}" },
+                { "key": "toAccountId", "value": "99999999" },
+                { "key": "amount", "value": "1.00" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Read a customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('carries a name', () => pm.expect(body.firstName).to.be.a('string').and.not.empty);",
+                  "pm.test('does not carry a password', () => {",
+                  "  pm.expect(Object.keys(body).map((k) => k.toLowerCase())).to.not.include('password');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}"] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [{ "key": "balanceBefore", "value": "" }]
+}
