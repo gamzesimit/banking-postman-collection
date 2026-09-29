@@ -20,8 +20,9 @@
                   "const body = pm.response.json();",
                   "pm.test('carries an identifier', () => pm.expect(body.id).to.be.a('number'));",
                   "pm.test('carries a type', () => pm.expect(body.type).to.be.oneOf(['CHECKING','SAVINGS','LOAN']));",
-                  "pm.test('balance carries two decimal places', () => {",
-                  "  pm.expect(String(body.balance)).to.match(/^-?\\d+\\.\\d{2}$/);",
+                  "pm.test('balance carries no fraction smaller than a cent', () => {",
+                  "  // money arrives as a JSON number, so 100.00 comes through as 100",
+                  "  pm.expect(String(body.balance)).to.match(/^-?\\d+(\\.\\d{1,2})?$/);",
                   "});",
                   "pm.collectionVariables.set('balanceBefore', body.balance);",
                   "pm.test('answers inside the read budget', () => pm.expect(pm.response.responseTime).to.be.below(1500));"
@@ -31,8 +32,22 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/accounts/{{fromAccount}}", "host": ["{{baseUrl}}"], "path": ["accounts", "{{fromAccount}}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{fromAccount}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{fromAccount}}"
+              ]
+            }
           }
         },
         {
@@ -50,8 +65,22 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/accounts/99999999", "host": ["{{baseUrl}}"], "path": ["accounts", "99999999"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/99999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "99999999"
+              ]
+            }
           }
         },
         {
@@ -74,8 +103,23 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}/accounts", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}", "accounts"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerId}}/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "customers",
+                "{{customerId}}",
+                "accounts"
+              ]
+            }
           }
         }
       ]
@@ -101,12 +145,25 @@
             "method": "POST",
             "url": {
               "raw": "{{baseUrl}}/transfer?fromAccountId={{fromAccount}}&toAccountId={{toAccount}}&amount=12.34",
-              "host": ["{{baseUrl}}"],
-              "path": ["transfer"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transfer"
+              ],
               "query": [
-                { "key": "fromAccountId", "value": "{{fromAccount}}" },
-                { "key": "toAccountId", "value": "{{toAccount}}" },
-                { "key": "amount", "value": "12.34" }
+                {
+                  "key": "fromAccountId",
+                  "value": "{{fromAccount}}"
+                },
+                {
+                  "key": "toAccountId",
+                  "value": "{{toAccount}}"
+                },
+                {
+                  "key": "amount",
+                  "value": "12.34"
+                }
               ]
             }
           }
@@ -130,8 +187,22 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/accounts/{{fromAccount}}", "host": ["{{baseUrl}}"], "path": ["accounts", "{{fromAccount}}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{fromAccount}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accounts",
+                "{{fromAccount}}"
+              ]
+            }
           }
         },
         {
@@ -151,12 +222,25 @@
             "method": "POST",
             "url": {
               "raw": "{{baseUrl}}/transfer?fromAccountId={{fromAccount}}&toAccountId=99999999&amount=1.00",
-              "host": ["{{baseUrl}}"],
-              "path": ["transfer"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transfer"
+              ],
               "query": [
-                { "key": "fromAccountId", "value": "{{fromAccount}}" },
-                { "key": "toAccountId", "value": "99999999" },
-                { "key": "amount", "value": "1.00" }
+                {
+                  "key": "fromAccountId",
+                  "value": "{{fromAccount}}"
+                },
+                {
+                  "key": "toAccountId",
+                  "value": "99999999"
+                },
+                {
+                  "key": "amount",
+                  "value": "1.00"
+                }
               ]
             }
           }
@@ -186,12 +270,31 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}"] }
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "customers",
+                "{{customerId}}"
+              ]
+            }
           }
         }
       ]
     }
   ],
-  "variable": [{ "key": "balanceBefore", "value": "" }]
+  "variable": [
+    {
+      "key": "balanceBefore",
+      "value": ""
+    }
+  ]
 }
